@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <script src="web3.min.js"></script>
+    	<link rel="stylesheet" type="text/css" href="normalize.css">
+    	<link rel="stylesheet" type="text/css" href="skeleton.css">
+    <title></title>
+  </head>
+  <body style="padding: 15px">
+
+  <div class="row">
+    <div class="one-half column">
+        <h4>Tools</h4>
+    	<div>
+            Click da' button to deploy contract<br >
+            <button class="button-primary" onclick="deploy()">Deploy!</button>
+        </div>
+        <br >
+        <div>
+            <input type="text" placeholder="value to set" id="myValue"> </input> <button onclick="setValue()">Go!</button>
+        </div>
+
+        <br >
+        <div>
+            <button onclick="getValue()">Get Value</button><br>
+            <div id="result">
+            </div>
+        </div>
+
+        <hr />
+        <div>
+            Deploy from Bytecode and Interface:<br >
+            Bytecode:<br>
+            <textarea id="bytecode"></textarea>
+            <br clear="all">
+
+            Interface:<br>
+            <textarea id="interface"></textarea>
+            <br clear="all">
+
+            <button class="button-primary" onclick="deploy()">Deploy from bytecode!</button>
+
+        </div>
+
+        <hr />
+        <h5>Prediction game:</h5>
+        <h6>Pick heads or tails:</h6>
+        <button onclick="playToss(1)">Pick heads</button> <button onclick="playToss(0)">Pick tails</button>
+        <br /><br />
+        <a onclick="viewResult()">View results</a>
+
+    </div>
+    <div class="one-half column">
+        <h4>Output</h4>
+        <button onclick="clearOutput()">Clear</button>
+
+    	<div id="logging">
+    	</div>
+    	
+    </div>
+  </div>
+  
+    <script>
+
+        var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+        // var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+
+
+        // set current provider
+        /*
+        if(typeof window.web3 !== "undefined" && typeof window.web3.currentProvider !== "undefined") {
+            var web3 = new Web3(window.web3.currentProvider);
+        } else {
+            var  web3 = new Web3(new Web3.providers.HttpProvider("http://10.0.3.174:8545"));
+        }
+        */
+
+        var simplestorageContract = web3.eth.contract([{"constant":true,"inputs":[],"name":"getValue","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":false,"inputs":[{"name":"value","type":"string"}],"name":"setValue","outputs":[],"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldValue","type":"string"},{"indexed":false,"name":"newValue","type":"string"}],"name":"valueChanged","type":"event"}]);
+        var bytecode = '6060604052610317806100126000396000f3606060405260e060020a600035046320965255811461002657806393a0935214610089575b005b610141600060608181528154602060026001831615610100026000190190921691909104601f810182900490910260a0908101604052608082815292939190828280156101da5780601f106101af576101008083540402835291602001916101da565b60206004803580820135601f81018490049093026080908101604052606084815261002494602493919291840191819083828082843750506040805181815260008054600260018216156101000260001901909116049282018390529698507f68ad6719a0070b3bb2f866fa0d46c8123b18cefe9b387ddb4feb6647ca41843597508895509350839250602083019150828501908690801561020f5780601f106101e45761010080835404028352916020019161020f565b60405180806020018281038252838181518152602001915080519060200190808383829060006004602084601f0104600f02600301f150905090810190601f1680156101a15780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b820191906000526020600020905b8154815290600101906020018083116101bd57829003601f168201915b5050505050905090565b820191906000526020600020905b8154815290600101906020018083116101f257829003601f168201915b50508381038252848181518152602001915080519060200190808383829060006004602084601f0104600f02600301f150905090810190601f1680156102695780820380516001836020036101000a031916815260200191505b5094505050505060405180910390a18060006000509080519060200190828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106102de57805160ff19168380011785555b5061030e9291505b80821115610313578381556001016102cb565b828001600101855582156102c3579182015b828111156102c35782518260005055916020019190600101906102f0565b505050565b5090';
+
+        logToDiv = function(stuff) {
+            loggingDiv = document.getElementById('logging');
+            loggingDiv.innerHTML += stuff + "<br>";
+        }
+
+        function clearOutput() {
+            document.getElementById('logging').innerHTML = '';
+        }
+
+
+
+        function deploy() {
+            // console.log(web3.isConnected())
+            var bytecodeFromForm = document.getElementById('bytecode').value;
+            var interfaceFromForm = document.getElementById('interface').value;
+
+            if(!!bytecodeFromForm && !!interfaceFromForm) {
+                logToDiv("Bytecode:<br>" + bytecodeFromForm);
+                logToDiv("Interface:<br>" + interfaceFromForm);
+
+
+                // NOTE: Evil eval!
+                simplestorageContract = web3.eth.contract(eval(interfaceFromForm));
+                bytecode = bytecodeFromForm;
+            }
+
+            var simplestorage = simplestorageContract.new(
+               {
+                 from: web3.eth.accounts[0],
+                 data: bytecode,
+                 gas: 4700000
+               }, function (e, contract){
+                if (typeof contract.address !== 'undefined') {
+                     logToDiv('Contract mined! address: <br>' + contract.address + '<br> transactionHash: ' + contract.transactionHash);
+                     Address = contract.address;
+                }
+             })
+        }
+
+
+
+        function setValue() {
+            var val = document.getElementById('myValue').value;
+            var Transaction = simplestorageContract.at(Address);
+            var TxHash = Transaction["setValue"].sendTransaction(val, {from: web3.eth.accounts[0]}, function(err, address) {
+             logToDiv(address);
+            })
+        }
+
+        function getValue() {
+            var p = simplestorageContract.at(Address);
+            var returnValue = p.getValue().toString();
+            logToDiv(returnValue);
+            document.getElementById("result").innerHTML=returnValue;
+        }
+
+        function playToss(choice) {
+            logToDiv("Using address: <br>" + Address);
+            Transaction = simplestorageContract.at(Address);
+            TxHash = Transaction["play"].sendTransaction(parseInt(choice), {from: web3.eth.accounts[0], value: 10}, function(err, address) {
+                logToDiv(address);
+            })
+
+            /*
+             TxHash = Transaction["play"].sendTransaction(parseInt(choice), {from: web3.eth.accounts[0]}, function(err, address) {
+             logToDiv(address);
+             })
+             */
+        }
+
+        function viewResult() {
+            var returnValue = Transaction.result().toString();
+            logToDiv(returnValue);
+        }
+
+
+
+    </script>
+
+  </body>
+</html>
