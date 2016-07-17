@@ -1,5 +1,5 @@
 ## Coin Toss
-// This is an Ethereum solidity contract for predicting the outcome of a virtual coin toss. Let's call it an Ether Toss game. 
+This is an Ethereum solidity contract for predicting the outcome of a virtual coin toss. Let's call it an Ether Toss game. 
 
 1. Install this for test chain on a local machine, run the following command from the terminal (assuming you have [nodejs](https://nodejs.org/en/) instsalled:
 
@@ -10,6 +10,10 @@
 3. From the terminal or command prompt, navigate to folder with the Coin Toss code files (including the index.html file) and run the command:
 
    `python -m SimpleHTTPServer`
+   
+   Or if you have python3, then run: 
+   
+   `python3 -m http.server`
 
 4. Open your web browser to:
 
